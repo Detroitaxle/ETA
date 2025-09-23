@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ETA Shipping</title>
+    <title>Shipping ETA</title>
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
@@ -159,13 +158,6 @@
             background-color: var(--accent-dark);
         }
         
-        .search-instructions {
-            text-align: center;
-            margin-top: 10px;
-            font-size: 0.9rem;
-            color: #888;
-        }
-        
         .results {
             display: none;
             margin-top: 30px;
@@ -188,18 +180,24 @@
         .result-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             margin-bottom: 15px;
+        }
+        
+        .state-info {
+            display: flex;
+            flex-direction: column;
         }
         
         .state-name {
             font-size: 1.5rem;
             color: var(--accent-color);
+            margin-bottom: 5px;
         }
         
         .state-time {
-            font-size: 1.2rem;
-            font-weight: bold;
+            font-size: 1rem;
+            color: #aaa;
         }
         
         .shipping-info {
@@ -289,6 +287,11 @@
             .shipping-info {
                 grid-template-columns: 1fr;
             }
+            
+            .result-header {
+                flex-direction: column;
+                gap: 10px;
+            }
         }
     </style>
 </head>
@@ -296,7 +299,7 @@
     <div class="container">
         <header>
             <div class="logo">
-                <h1>ETA Shipping </h1>
+                <h1>Shipping ETA</h1>
             </div>
         </header>
         
@@ -317,7 +320,6 @@
             <h2>Search Shipping Times by Zip Code or State</h2>
             <div class="search-container">
                 <input type="text" class="search-input" id="search-input" placeholder="Enter zip code or state abbreviation (e.g., 90210 or CA)">
-                <div class="search-instructions">Start typing to see results automatically</div>
                 <button class="search-btn" id="search-btn">Search</button>
             </div>
             
@@ -334,7 +336,7 @@
         </section>
         
         <footer>
-            <p>ETA Shipping &copy; 2023</p>
+            <p>Shipping ETA &copy; 2023</p>
         </footer>
     </div>
 
@@ -372,11 +374,203 @@
         
         let searchTimeout;
         
+        // US States data with timezones
+        const statesData = {
+            'AL': { name: 'Alabama', timezone: 'America/Chicago' },
+            'AK': { name: 'Alaska', timezone: 'America/Anchorage' },
+            'AZ': { name: 'Arizona', timezone: 'America/Phoenix' },
+            'AR': { name: 'Arkansas', timezone: 'America/Chicago' },
+            'CA': { name: 'California', timezone: 'America/Los_Angeles' },
+            'CO': { name: 'Colorado', timezone: 'America/Denver' },
+            'CT': { name: 'Connecticut', timezone: 'America/New_York' },
+            'DE': { name: 'Delaware', timezone: 'America/New_York' },
+            'FL': { name: 'Florida', timezone: 'America/New_York' },
+            'GA': { name: 'Georgia', timezone: 'America/New_York' },
+            'HI': { name: 'Hawaii', timezone: 'Pacific/Honolulu' },
+            'ID': { name: 'Idaho', timezone: 'America/Denver' },
+            'IL': { name: 'Illinois', timezone: 'America/Chicago' },
+            'IN': { name: 'Indiana', timezone: 'America/New_York' },
+            'IA': { name: 'Iowa', timezone: 'America/Chicago' },
+            'KS': { name: 'Kansas', timezone: 'America/Chicago' },
+            'KY': { name: 'Kentucky', timezone: 'America/New_York' },
+            'LA': { name: 'Louisiana', timezone: 'America/Chicago' },
+            'ME': { name: 'Maine', timezone: 'America/New_York' },
+            'MD': { name: 'Maryland', timezone: 'America/New_York' },
+            'MA': { name: 'Massachusetts', timezone: 'America/New_York' },
+            'MI': { name: 'Michigan', timezone: 'America/Detroit' },
+            'MN': { name: 'Minnesota', timezone: 'America/Chicago' },
+            'MS': { name: 'Mississippi', timezone: 'America/Chicago' },
+            'MO': { name: 'Missouri', timezone: 'America/Chicago' },
+            'MT': { name: 'Montana', timezone: 'America/Denver' },
+            'NE': { name: 'Nebraska', timezone: 'America/Chicago' },
+            'NV': { name: 'Nevada', timezone: 'America/Los_Angeles' },
+            'NH': { name: 'New Hampshire', timezone: 'America/New_York' },
+            'NJ': { name: 'New Jersey', timezone: 'America/New_York' },
+            'NM': { name: 'New Mexico', timezone: 'America/Denver' },
+            'NY': { name: 'New York', timezone: 'America/New_York' },
+            'NC': { name: 'North Carolina', timezone: 'America/New_York' },
+            'ND': { name: 'North Dakota', timezone: 'America/Chicago' },
+            'OH': { name: 'Ohio', timezone: 'America/New_York' },
+            'OK': { name: 'Oklahoma', timezone: 'America/Chicago' },
+            'OR': { name: 'Oregon', timezone: 'America/Los_Angeles' },
+            'PA': { name: 'Pennsylvania', timezone: 'America/New_York' },
+            'RI': { name: 'Rhode Island', timezone: 'America/New_York' },
+            'SC': { name: 'South Carolina', timezone: 'America/New_York' },
+            'SD': { name: 'South Dakota', timezone: 'America/Chicago' },
+            'TN': { name: 'Tennessee', timezone: 'America/Chicago' },
+            'TX': { name: 'Texas', timezone: 'America/Chicago' },
+            'UT': { name: 'Utah', timezone: 'America/Denver' },
+            'VT': { name: 'Vermont', timezone: 'America/New_York' },
+            'VA': { name: 'Virginia', timezone: 'America/New_York' },
+            'WA': { name: 'Washington', timezone: 'America/Los_Angeles' },
+            'WV': { name: 'West Virginia', timezone: 'America/New_York' },
+            'WI': { name: 'Wisconsin', timezone: 'America/Chicago' },
+            'WY': { name: 'Wyoming', timezone: 'America/Denver' }
+        };
+        
         // Function to validate input
         function isValidInput(input) {
             const zipRegex = /^\d{5}$/;
             const stateRegex = /^[A-Za-z]{2}$/;
             return zipRegex.test(input) || stateRegex.test(input);
+        }
+        
+        // Function to get state info from input
+        function getStateInfo(input) {
+            // If input is a state abbreviation
+            if (/^[A-Za-z]{2}$/.test(input)) {
+                const stateAbbr = input.toUpperCase();
+                return statesData[stateAbbr] || null;
+            }
+            
+            // If input is a zip code, we need to map it to a state
+            // For simplicity, we'll use a basic mapping based on zip code ranges
+            // In a real application, you would use a proper zip code database
+            const zip = parseInt(input);
+            
+            // Basic zip code to state mapping (simplified)
+            const zipRanges = {
+                'AL': [35000, 36999],
+                'AK': [99500, 99999],
+                'AZ': [85000, 86599],
+                'AR': [71600, 72999],
+                'CA': [90000, 96199],
+                'CO': [80000, 81699],
+                'CT': [6000, 6999],
+                'DE': [19700, 19999],
+                'FL': [32000, 34999],
+                'GA': [30000, 31999],
+                'HI': [96700, 96899],
+                'ID': [83200, 83899],
+                'IL': [60000, 62999],
+                'IN': [46000, 47999],
+                'IA': [50000, 52899],
+                'KS': [66000, 67999],
+                'KY': [40000, 42799],
+                'LA': [70000, 71499],
+                'ME': [3900, 4999],
+                'MD': [20600, 21999],
+                'MA': [1000, 2799],
+                'MI': [48000, 49999],
+                'MN': [55000, 56799],
+                'MS': [38600, 39799],
+                'MO': [63000, 65899],
+                'MT': [59000, 59999],
+                'NE': [68000, 69399],
+                'NV': [88900, 89899],
+                'NH': [3000, 3899],
+                'NJ': [7000, 8999],
+                'NM': [87000, 88499],
+                'NY': [10000, 14999],
+                'NC': [27000, 28999],
+                'ND': [58000, 58899],
+                'OH': [43000, 45999],
+                'OK': [73000, 74999],
+                'OR': [97000, 97999],
+                'PA': [15000, 19699],
+                'RI': [2800, 2999],
+                'SC': [29000, 29999],
+                'SD': [57000, 57799],
+                'TN': [37000, 38599],
+                'TX': [75000, 79999],
+                'UT': [84000, 84799],
+                'VT': [5000, 5999],
+                'VA': [20100, 24699],
+                'WA': [98000, 99499],
+                'WV': [24700, 26899],
+                'WI': [53000, 54999],
+                'WY': [82000, 83199]
+            };
+            
+            for (const [stateAbbr, range] of Object.entries(zipRanges)) {
+                if (zip >= range[0] && zip <= range[1]) {
+                    return statesData[stateAbbr];
+                }
+            }
+            
+            return null;
+        }
+        
+        // Function to calculate shipping times based on state
+        function calculateShippingTimes(stateAbbr) {
+            // Simplified shipping time calculation based on distance from warehouses
+            // In a real application, you would use actual shipping data
+            
+            // Base shipping times from Detroit (DT) and Texas (JZ) warehouses
+            const baseTimes = {
+                'DT': { min: 2, max: 5 }, // Detroit warehouse base times
+                'JZ': { min: 1, max: 4 }  // Texas warehouse base times
+            };
+            
+            // Distance factors by region (simplified)
+            const regionFactors = {
+                'Northeast': { DT: 0, JZ: 1 }, // Close to Detroit, farther from Texas
+                'Midwest': { DT: -1, JZ: 0 },   // Very close to Detroit, medium to Texas
+                'South': { DT: 0, JZ: -1 },     // Medium to Detroit, close to Texas
+                'West': { DT: 1, JZ: 0 },       // Far from Detroit, medium to Texas
+                'Pacific': { DT: 2, JZ: 1 }     // Very far from Detroit, far from Texas
+            };
+            
+            // State to region mapping (simplified)
+            const stateRegions = {
+                'CT': 'Northeast', 'ME': 'Northeast', 'MA': 'Northeast', 
+                'NH': 'Northeast', 'RI': 'Northeast', 'VT': 'Northeast',
+                'NJ': 'Northeast', 'NY': 'Northeast', 'PA': 'Northeast',
+                'IL': 'Midwest', 'IN': 'Midwest', 'IA': 'Midwest', 
+                'KS': 'Midwest', 'MI': 'Midwest', 'MN': 'Midwest',
+                'MO': 'Midwest', 'NE': 'Midwest', 'ND': 'Midwest', 
+                'OH': 'Midwest', 'SD': 'Midwest', 'WI': 'Midwest',
+                'AL': 'South', 'AR': 'South', 'DE': 'South', 
+                'FL': 'South', 'GA': 'South', 'KY': 'South',
+                'LA': 'South', 'MD': 'South', 'MS': 'South', 
+                'NC': 'South', 'OK': 'South', 'SC': 'South',
+                'TN': 'South', 'TX': 'South', 'VA': 'South', 
+                'WV': 'South', 'DC': 'South',
+                'AZ': 'West', 'CO': 'West', 'ID': 'West', 
+                'MT': 'West', 'NV': 'West', 'NM': 'West',
+                'UT': 'West', 'WY': 'West',
+                'AK': 'Pacific', 'CA': 'Pacific', 'HI': 'Pacific', 
+                'OR': 'Pacific', 'WA': 'Pacific'
+            };
+            
+            const region = stateRegions[stateAbbr] || 'Northeast'; // Default to Northeast
+            const factors = regionFactors[region];
+            
+            // Calculate shipping times
+            const dtTime = {
+                min: Math.max(1, baseTimes.DT.min + factors.DT),
+                max: Math.max(2, baseTimes.DT.max + factors.DT)
+            };
+            
+            const jzTime = {
+                min: Math.max(1, baseTimes.JZ.min + factors.JZ),
+                max: Math.max(2, baseTimes.JZ.max + factors.JZ)
+            };
+            
+            return {
+                DT: `${dtTime.min}-${dtTime.max} business days`,
+                JZ: `${jzTime.min}-${jzTime.max} business days`
+            };
         }
         
         // Function to perform search
@@ -395,49 +589,68 @@
             
             // Simulate API call delay
             setTimeout(() => {
-                // In a real app, you would fetch data from an API
-                // For this demo, we'll use mock data based on the input
+                const stateInfo = getStateInfo(searchValue);
                 
-                let stateName, stateTimeZone, shippingFromDT, shippingFromJZ;
-                
-                // Mock data based on input
-                if (searchValue.toUpperCase() === 'CA' || searchValue === '90210') {
-                    stateName = 'California';
-                    stateTimeZone = 'America/Los_Angeles';
-                    shippingFromDT = '3-5 business days';
-                    shippingFromJZ = '2-4 business days';
-                } else if (searchValue.toUpperCase() === 'TX' || searchValue === '75001') {
-                    stateName = 'Texas';
-                    stateTimeZone = 'America/Chicago';
-                    shippingFromDT = '2-4 business days';
-                    shippingFromJZ = '1-2 business days';
-                } else if (searchValue.toUpperCase() === 'NY' || searchValue === '10001') {
-                    stateName = 'New York';
-                    stateTimeZone = 'America/New_York';
-                    shippingFromDT = '2-3 business days';
-                    shippingFromJZ = '3-5 business days';
-                } else if (searchValue.toUpperCase() === 'FL' || searchValue === '33101') {
-                    stateName = 'Florida';
-                    stateTimeZone = 'America/New_York';
-                    shippingFromDT = '3-5 business days';
-                    shippingFromJZ = '4-6 business days';
-                } else if (searchValue.toUpperCase() === 'MI' || searchValue === '48220') {
-                    stateName = 'Michigan';
-                    stateTimeZone = 'America/Detroit';
-                    shippingFromDT = '1-2 business days';
-                    shippingFromJZ = '3-5 business days';
-                } else {
-                    // Default for any other input
-                    stateName = 'Unknown State';
-                    stateTimeZone = 'America/New_York';
-                    shippingFromDT = '3-6 business days';
-                    shippingFromJZ = '4-7 business days';
+                if (!stateInfo) {
+                    // If we can't determine the state, show generic info
+                    const now = new Date();
+                    const stateTime = now.toLocaleString("en-US", {
+                        timeZone: "America/New_York",
+                        hour12: true,
+                        hour: 'numeric',
+                        minute: 'numeric',
+                        timeZoneName: 'short'
+                    });
+                    
+                    const resultsHTML = `
+                        <div class="result-card">
+                            <div class="result-header">
+                                <div class="state-info">
+                                    <div class="state-name">Selected Location</div>
+                                    <div class="state-time">Local Time: ${stateTime}</div>
+                                </div>
+                            </div>
+                            
+                            <div class="shipping-info">
+                                <div class="warehouse">
+                                    <h3>Detroit Warehouse (DT)</h3>
+                                    <div class="warehouse-info">
+                                        <span>Zip: 48220</span>
+                                        <span class="shipping-time">3-6 business days</span>
+                                    </div>
+                                    <div>Carrier: FedEx Ground</div>
+                                </div>
+                                
+                                <div class="warehouse">
+                                    <h3>Texas Warehouse (JZ)</h3>
+                                    <div class="warehouse-info">
+                                        <span>Zip: 88008</span>
+                                        <span class="shipping-time">4-7 business days</span>
+                                    </div>
+                                    <div>Carrier: FedEx Ground</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    results.innerHTML = resultsHTML;
+                    loading.style.display = 'none';
+                    results.style.display = 'block';
+                    return;
                 }
+                
+                // Get state abbreviation from state name
+                const stateAbbr = Object.keys(statesData).find(abbr => 
+                    statesData[abbr].name === stateInfo.name
+                );
+                
+                // Calculate shipping times
+                const shippingTimes = calculateShippingTimes(stateAbbr);
                 
                 // Update the state time
                 const now = new Date();
                 const stateTime = now.toLocaleString("en-US", {
-                    timeZone: stateTimeZone,
+                    timeZone: stateInfo.timezone,
                     hour12: true,
                     hour: 'numeric',
                     minute: 'numeric',
@@ -448,8 +661,10 @@
                 const resultsHTML = `
                     <div class="result-card">
                         <div class="result-header">
-                            <div class="state-name">${stateName}</div>
-                            <div class="state-time">${stateTime}</div>
+                            <div class="state-info">
+                                <div class="state-name">${stateInfo.name}</div>
+                                <div class="state-time">Local Time: ${stateTime}</div>
+                            </div>
                         </div>
                         
                         <div class="shipping-info">
@@ -457,7 +672,7 @@
                                 <h3>Detroit Warehouse (DT)</h3>
                                 <div class="warehouse-info">
                                     <span>Zip: 48220</span>
-                                    <span class="shipping-time">${shippingFromDT}</span>
+                                    <span class="shipping-time">${shippingTimes.DT}</span>
                                 </div>
                                 <div>Carrier: FedEx Ground</div>
                             </div>
@@ -466,7 +681,7 @@
                                 <h3>Texas Warehouse (JZ)</h3>
                                 <div class="warehouse-info">
                                     <span>Zip: 88008</span>
-                                    <span class="shipping-time">${shippingFromJZ}</span>
+                                    <span class="shipping-time">${shippingTimes.JZ}</span>
                                 </div>
                                 <div>Carrier: FedEx Ground</div>
                             </div>
@@ -524,8 +739,8 @@
         window.addEventListener('load', function() {
             // Show a sample result on page load
             setTimeout(() => {
-                searchInput.value = 'CA';
-                performSearch('CA');
+                searchInput.value = 'VT';
+                performSearch('VT');
             }, 1000);
         });
     </script>
