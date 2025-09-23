@@ -1,1 +1,533 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ETA Shipping</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <style>
+        :root {
+            --dark-bg: #121212;
+            --card-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --accent-color: #ff8c00;
+            --accent-dark: #cc7000;
+            --border-color: #333;
+            --success-color: #4caf50;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--dark-bg);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 30px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo h1 {
+            color: var(--accent-color);
+            font-size: 2rem;
+        }
+        
+        .detroit-info {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .time-weather {
+            display: flex;
+            gap: 30px;
+        }
+        
+        .time, .weather {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .time h2, .weather h2 {
+            color: var(--accent-color);
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+        
+        .time-display {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        
+        .weather-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .temp {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        
+        .search-section {
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+        
+        .search-section h2 {
+            color: var(--accent-color);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .search-container {
+            max-width: 500px;
+            margin: 0 auto 30px;
+            position: relative;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: #2a2a2a;
+            color: var(--text-color);
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+        
+        .search-input.valid {
+            border-color: var(--success-color);
+        }
+        
+        .search-btn {
+            padding: 12px 25px;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        .search-btn:hover {
+            background-color: var(--accent-dark);
+        }
+        
+        .search-instructions {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #888;
+        }
+        
+        .results {
+            display: none;
+            margin-top: 30px;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .result-card {
+            background-color: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--accent-color);
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .state-name {
+            font-size: 1.5rem;
+            color: var(--accent-color);
+        }
+        
+        .state-time {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        .shipping-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .warehouse {
+            background-color: #333;
+            padding: 15px;
+            border-radius: 6px;
+            transition: transform 0.3s;
+        }
+        
+        .warehouse:hover {
+            transform: translateY(-3px);
+        }
+        
+        .warehouse h3 {
+            color: var(--accent-color);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .warehouse-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .shipping-time {
+            font-weight: bold;
+            color: var(--accent-color);
+        }
+        
+        .error-message {
+            color: #ff6b6b;
+            text-align: center;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        .loading {
+            text-align: center;
+            margin: 20px 0;
+            display: none;
+        }
+        
+        .loading-spinner {
+            border: 3px solid #333;
+            border-top: 3px solid var(--accent-color);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 40px;
+            border-top: 1px solid var(--border-color);
+            color: #888;
+        }
+        
+        @media (max-width: 768px) {
+            .detroit-info {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+            
+            .time-weather {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .shipping-info {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <h1>ETA Shipping </h1>
+            </div>
+        </header>
+        
+        <section class="detroit-info">
+            <div class="time-weather">
+                <div class="time">
+                    <h2>Detroit, MI Local Time</h2>
+                    <div class="time-display" id="detroit-time">Loading...</div>
+                </div>
+                <div class="weather">
+                    <h2>Current Weather</h2>
+                    <div class="weather-info" id="detroit-weather">Loading...</div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="search-section">
+            <h2>Search Shipping Times by Zip Code or State</h2>
+            <div class="search-container">
+                <input type="text" class="search-input" id="search-input" placeholder="Enter zip code or state abbreviation (e.g., 90210 or CA)">
+                <div class="search-instructions">Start typing to see results automatically</div>
+                <button class="search-btn" id="search-btn">Search</button>
+            </div>
+            
+            <div class="error-message" id="error-message">Please enter a valid zip code or state abbreviation.</div>
+            
+            <div class="loading" id="loading">
+                <div class="loading-spinner"></div>
+                <p>Searching...</p>
+            </div>
+            
+            <div class="results" id="results">
+                <!-- Results will be populated here -->
+            </div>
+        </section>
+        
+        <footer>
+            <p>ETA Shipping &copy; 2023</p>
+        </footer>
+    </div>
+
+    <script>
+        // Update Detroit time
+        function updateDetroitTime() {
+            const detroitTimeElement = document.getElementById('detroit-time');
+            const now = new Date();
+            const detroitTime = now.toLocaleString("en-US", {
+                timeZone: "America/Detroit",
+                hour12: true,
+                hour: 'numeric',
+                minute: 'numeric',
+                second: 'numeric'
+            });
+            detroitTimeElement.textContent = detroitTime;
+        }
+        
+        // Update time every second
+        setInterval(updateDetroitTime, 1000);
+        updateDetroitTime();
+        
+        // Mock weather data (in a real app, you'd fetch from a weather API)
+        document.getElementById('detroit-weather').innerHTML = `
+            <span class="temp">72°F</span>
+            <span>Partly Cloudy</span>
+        `;
+        
+        // Search functionality
+        const searchInput = document.getElementById('search-input');
+        const searchBtn = document.getElementById('search-btn');
+        const errorMessage = document.getElementById('error-message');
+        const results = document.getElementById('results');
+        const loading = document.getElementById('loading');
+        
+        let searchTimeout;
+        
+        // Function to validate input
+        function isValidInput(input) {
+            const zipRegex = /^\d{5}$/;
+            const stateRegex = /^[A-Za-z]{2}$/;
+            return zipRegex.test(input) || stateRegex.test(input);
+        }
+        
+        // Function to perform search
+        function performSearch(searchValue) {
+            if (!isValidInput(searchValue)) {
+                errorMessage.style.display = 'block';
+                results.style.display = 'none';
+                searchInput.classList.remove('valid');
+                return;
+            }
+            
+            errorMessage.style.display = 'none';
+            searchInput.classList.add('valid');
+            loading.style.display = 'block';
+            results.style.display = 'none';
+            
+            // Simulate API call delay
+            setTimeout(() => {
+                // In a real app, you would fetch data from an API
+                // For this demo, we'll use mock data based on the input
+                
+                let stateName, stateTimeZone, shippingFromDT, shippingFromJZ;
+                
+                // Mock data based on input
+                if (searchValue.toUpperCase() === 'CA' || searchValue === '90210') {
+                    stateName = 'California';
+                    stateTimeZone = 'America/Los_Angeles';
+                    shippingFromDT = '3-5 business days';
+                    shippingFromJZ = '2-4 business days';
+                } else if (searchValue.toUpperCase() === 'TX' || searchValue === '75001') {
+                    stateName = 'Texas';
+                    stateTimeZone = 'America/Chicago';
+                    shippingFromDT = '2-4 business days';
+                    shippingFromJZ = '1-2 business days';
+                } else if (searchValue.toUpperCase() === 'NY' || searchValue === '10001') {
+                    stateName = 'New York';
+                    stateTimeZone = 'America/New_York';
+                    shippingFromDT = '2-3 business days';
+                    shippingFromJZ = '3-5 business days';
+                } else if (searchValue.toUpperCase() === 'FL' || searchValue === '33101') {
+                    stateName = 'Florida';
+                    stateTimeZone = 'America/New_York';
+                    shippingFromDT = '3-5 business days';
+                    shippingFromJZ = '4-6 business days';
+                } else if (searchValue.toUpperCase() === 'MI' || searchValue === '48220') {
+                    stateName = 'Michigan';
+                    stateTimeZone = 'America/Detroit';
+                    shippingFromDT = '1-2 business days';
+                    shippingFromJZ = '3-5 business days';
+                } else {
+                    // Default for any other input
+                    stateName = 'Unknown State';
+                    stateTimeZone = 'America/New_York';
+                    shippingFromDT = '3-6 business days';
+                    shippingFromJZ = '4-7 business days';
+                }
+                
+                // Update the state time
+                const now = new Date();
+                const stateTime = now.toLocaleString("en-US", {
+                    timeZone: stateTimeZone,
+                    hour12: true,
+                    hour: 'numeric',
+                    minute: 'numeric',
+                    timeZoneName: 'short'
+                });
+                
+                // Create results HTML
+                const resultsHTML = `
+                    <div class="result-card">
+                        <div class="result-header">
+                            <div class="state-name">${stateName}</div>
+                            <div class="state-time">${stateTime}</div>
+                        </div>
+                        
+                        <div class="shipping-info">
+                            <div class="warehouse">
+                                <h3>Detroit Warehouse (DT)</h3>
+                                <div class="warehouse-info">
+                                    <span>Zip: 48220</span>
+                                    <span class="shipping-time">${shippingFromDT}</span>
+                                </div>
+                                <div>Carrier: FedEx Ground</div>
+                            </div>
+                            
+                            <div class="warehouse">
+                                <h3>Texas Warehouse (JZ)</h3>
+                                <div class="warehouse-info">
+                                    <span>Zip: 88008</span>
+                                    <span class="shipping-time">${shippingFromJZ}</span>
+                                </div>
+                                <div>Carrier: FedEx Ground</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Update the results
+                results.innerHTML = resultsHTML;
+                loading.style.display = 'none';
+                results.style.display = 'block';
+            }, 800); // Simulated API delay
+        }
+        
+        // Event listener for input changes (automatic search)
+        searchInput.addEventListener('input', function() {
+            const searchValue = this.value.trim();
+            
+            // Clear previous timeout
+            clearTimeout(searchTimeout);
+            
+            // If input is empty, hide results and error
+            if (searchValue === '') {
+                errorMessage.style.display = 'none';
+                results.style.display = 'none';
+                searchInput.classList.remove('valid');
+                return;
+            }
+            
+            // Set a timeout to perform search after user stops typing
+            searchTimeout = setTimeout(() => {
+                performSearch(searchValue);
+            }, 500); // Wait 500ms after user stops typing
+        });
+        
+        // Event listener for search button
+        searchBtn.addEventListener('click', function() {
+            const searchValue = searchInput.value.trim();
+            if (searchValue) {
+                performSearch(searchValue);
+            }
+        });
+        
+        // Event listener for Enter key
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const searchValue = this.value.trim();
+                if (searchValue) {
+                    performSearch(searchValue);
+                }
+            }
+        });
+        
+        // Add some sample data for demonstration
+        window.addEventListener('load', function() {
+            // Show a sample result on page load
+            setTimeout(() => {
+                searchInput.value = 'CA';
+                performSearch('CA');
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
