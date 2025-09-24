@@ -158,6 +158,13 @@
             background-color: var(--accent-dark);
         }
         
+        .search-instructions {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #888;
+        }
+        
         .results-container {
             min-height: 300px;
             position: relative;
@@ -336,11 +343,12 @@
         <section class="search-section">
             <h2>Search Shipping Times by Zip Code or State</h2>
             <div class="search-container">
-                <input type="text" class="search-input" id="search-input" placeholder="Enter zip code or state abbreviation (e.g., 90210 or CA)">
+                <input type="text" class="search-input" id="search-input" placeholder="Enter zip code, state abbreviation, or full state name (e.g., 90210, CA, or California)">
+                <div class="search-instructions">You can search by zip code, state abbreviation, or full state name</div>
                 <button class="search-btn" id="search-btn">Search</button>
             </div>
             
-            <div class="error-message" id="error-message">Please enter a valid zip code or state abbreviation.</div>
+            <div class="error-message" id="error-message">Please enter a valid zip code, state abbreviation, or state name.</div>
             
             <div class="loading" id="loading">
                 <div class="loading-spinner"></div>
@@ -449,11 +457,21 @@
             'WY': { name: 'Wyoming', timezone: 'America/Denver' }
         };
         
+        // Create a mapping of state names to abbreviations (case insensitive)
+        const stateNameToAbbr = {};
+        Object.keys(statesData).forEach(abbr => {
+            stateNameToAbbr[statesData[abbr].name.toLowerCase()] = abbr;
+        });
+        
         // Function to validate input
         function isValidInput(input) {
             const zipRegex = /^\d{5}$/;
-            const stateRegex = /^[A-Za-z]{2}$/;
-            return zipRegex.test(input) || stateRegex.test(input);
+            const stateAbbrRegex = /^[A-Za-z]{2}$/;
+            
+            // Check if it's a valid state name
+            const isStateName = stateNameToAbbr[input.toLowerCase()] !== undefined;
+            
+            return zipRegex.test(input) || stateAbbrRegex.test(input) || isStateName;
         }
         
         // Function to get state info from input
@@ -464,9 +482,13 @@
                 return statesData[stateAbbr] || null;
             }
             
+            // If input is a state name
+            if (stateNameToAbbr[input.toLowerCase()]) {
+                const stateAbbr = stateNameToAbbr[input.toLowerCase()];
+                return statesData[stateAbbr];
+            }
+            
             // If input is a zip code, we need to map it to a state
-            // For simplicity, we'll use a basic mapping based on zip code ranges
-            // In a real application, you would use a proper zip code database
             const zip = parseInt(input);
             
             // Basic zip code to state mapping (simplified)
@@ -827,8 +849,8 @@
         window.addEventListener('load', function() {
             // Show a sample result on page load
             setTimeout(() => {
-                searchInput.value = 'VT';
-                performSearch('VT');
+                searchInput.value = 'California';
+                performSearch('California');
             }, 1000);
         });
     </script>
